@@ -1,0 +1,33 @@
+{
+  "name": "pathfinding-template",
+  "version": "1.0.0",
+  "description": "OpenStreetMap pathfinding template",
+  "scripts": {
+    "start": "parcel serve --port 8080 index.html",
+    "build": "parcel build index.html --public-url ./ && shx cp -r data dist/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "eslintConfig": {
+    "extends": "openlayers"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TCCC-Pathfinding/Pathfinding-Template.git"
+  },
+  "author": "Javier Falca",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TCCC-Pathfinding/Pathfinding-Template/issues"
+  },
+  "homepage": "https://github.com/TCCC-Pathfinding/Pathfinding-Template#readme",
+  "dependencies": {
+    "ol": "^6.14.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-openlayers": "^15.1.0",
+    "parcel": "^2.0.0-rc.0",
+    "serve-static": "^1.14.1",
+    "shx": "^0.3.3"
+  }
+}
