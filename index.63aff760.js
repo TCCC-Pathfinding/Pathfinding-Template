@@ -512,24 +512,34 @@ var _vector = require("ol/layer/Vector");
 var _vectorDefault = parcelHelpers.interopDefault(_vector);
 var _ol = require("ol");
 var _style = require("ol/style");
+var _polyline = require("ol/format/Polyline");
+var _polylineDefault = parcelHelpers.interopDefault(_polyline);
 var _source = require("ol/source");
 var _proj = require("ol/proj");
 var _point = require("ol/geom/Point");
 var _pointDefault = parcelHelpers.interopDefault(_point);
-//Vector Source containing features on map
+/**
+ * Tech Connect Project # 1
+ * Restaurant Map Pathfinding
+ */ //Vector Source containing features on map
 const source = new (0, _source.Vector)();
+const coordinatesList = [];
 //Basic client to host JSON data
 const client = new XMLHttpRequest();
 client.open("GET", "./data/test_data.json");
+// Creates features from JSON data
+// Creates routes IN ORDER from JSON input
 client.onload = function() {
     const json = JSON.parse(client.responseText);
     const features = [];
     for (let location of json){
+        let coords = [
+            location["lon"],
+            location["lat"]
+        ];
+        coordinatesList.push(coords);
         let feature = new (0, _ol.Feature)({
-            geometry: new (0, _pointDefault.default)((0, _proj.fromLonLat)([
-                location["lon"],
-                location["lat"]
-            ]))
+            geometry: new (0, _pointDefault.default)((0, _proj.fromLonLat)(coords))
         });
         //Styling configuration and text
         const style = new (0, _style.Style)({
@@ -559,8 +569,10 @@ client.onload = function() {
         feature.setStyle(style);
         features.push(feature);
     }
+    console.log(features);
     //Add the features to the Vector Source
     source.addFeatures(features);
+    renderRoutes(coordinatesList);
 };
 client.send();
 //Layer containing the points rendered on top of the map
@@ -588,14 +600,57 @@ const map = new (0, _ol.Map)({
     ],
     view: view
 });
-// This is so the map refreshes itself
+// To allow the map to refresh itself
 function animate() {
     map.render();
     window.requestAnimationFrame(animate);
 }
 animate();
+// Renders routes between a list of coordinates in order
+async function renderRoutes(pointsList) {
+    for(let i = 0; i < pointsList.length; i++){
+        let loc1 = pointsList[i].toString();
+        let loc2 = pointsList[i + 1].toString();
+        renderRoute(loc1, loc2);
+        if (i + 1 == pointsList.length - 1) break;
+    }
+}
+// Adds a route by creating a Polyline Feature from API call
+async function renderRoute(loc1, loc2) {
+    const url_osrm_route = "//router.project-osrm.org/route/v1/driving/";
+    let res = await fetch(url_osrm_route + loc1 + ";" + loc2);
+    let json = await res.json();
+    let feat = createRouteFeature(json.routes[0].geometry);
+    source.addFeature(feat);
+}
+// Polyline Feature Object and Style
+function createRouteFeature(polyline) {
+    var route = new (0, _polylineDefault.default)({
+        factor: 1e5
+    }).readGeometry(polyline, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:3857"
+    });
+    var feature = new (0, _ol.Feature)({
+        type: "route",
+        geometry: route
+    });
+    let routeStyle = new (0, _style.Style)({
+        stroke: new (0, _style.Stroke)({
+            width: 6,
+            color: [
+                10,
+                10,
+                10,
+                0.7
+            ]
+        })
+    });
+    feature.setStyle(routeStyle);
+    return feature;
+}
 
-},{"ol/source/OSM":"dmxOv","ol/layer/Tile":"3ytzs","ol/layer/Vector":"iTrAy","ol":"3a1E4","ol/style":"hEQxF","ol/source":"5x5oh","ol/proj":"SznqC","ol/geom/Point":"hx2Ar","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dmxOv":[function(require,module,exports) {
+},{"ol/source/OSM":"dmxOv","ol/layer/Tile":"3ytzs","ol/layer/Vector":"iTrAy","ol":"3a1E4","ol/style":"hEQxF","ol/format/Polyline":"6lf3O","ol/source":"5x5oh","ol/proj":"SznqC","ol/geom/Point":"hx2Ar","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dmxOv":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "ATTRIBUTION", ()=>ATTRIBUTION);
@@ -40197,7 +40252,760 @@ var __extends = undefined && undefined.__extends || function() {
 }((0, _pointerJsDefault.default));
 exports.default = Translate;
 
-},{"../Collection.js":"gReoh","../events/Event.js":"hwXQP","./Property.js":"lHt12","./Pointer.js":"1GIxf","../functions.js":"iqv8I","../events/condition.js":"iQTYY","../array.js":"1Fbic","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5x5oh":[function(require,module,exports) {
+},{"../Collection.js":"gReoh","../events/Event.js":"hwXQP","./Property.js":"lHt12","./Pointer.js":"1GIxf","../functions.js":"iqv8I","../events/condition.js":"iQTYY","../array.js":"1Fbic","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6lf3O":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Encode a list of n-dimensional points and return an encoded string
+ *
+ * Attention: This function will modify the passed array!
+ *
+ * @param {Array<number>} numbers A list of n-dimensional points.
+ * @param {number} stride The number of dimension of the points in the list.
+ * @param {number} [opt_factor] The factor by which the numbers will be
+ *     multiplied. The remaining decimal places will get rounded away.
+ *     Default is `1e5`.
+ * @return {string} The encoded string.
+ * @api
+ */ parcelHelpers.export(exports, "encodeDeltas", ()=>encodeDeltas);
+/**
+ * Decode a list of n-dimensional points from an encoded string
+ *
+ * @param {string} encoded An encoded string.
+ * @param {number} stride The number of dimension of the points in the
+ *     encoded string.
+ * @param {number} [opt_factor] The factor by which the resulting numbers will
+ *     be divided. Default is `1e5`.
+ * @return {Array<number>} A list of n-dimensional points.
+ * @api
+ */ parcelHelpers.export(exports, "decodeDeltas", ()=>decodeDeltas);
+/**
+ * Encode a list of floating point numbers and return an encoded string
+ *
+ * Attention: This function will modify the passed array!
+ *
+ * @param {Array<number>} numbers A list of floating point numbers.
+ * @param {number} [opt_factor] The factor by which the numbers will be
+ *     multiplied. The remaining decimal places will get rounded away.
+ *     Default is `1e5`.
+ * @return {string} The encoded string.
+ * @api
+ */ parcelHelpers.export(exports, "encodeFloats", ()=>encodeFloats);
+/**
+ * Decode a list of floating point numbers from an encoded string
+ *
+ * @param {string} encoded An encoded string.
+ * @param {number} [opt_factor] The factor by which the result will be divided.
+ *     Default is `1e5`.
+ * @return {Array<number>} A list of floating point numbers.
+ * @api
+ */ parcelHelpers.export(exports, "decodeFloats", ()=>decodeFloats);
+/**
+ * Encode a list of signed integers and return an encoded string
+ *
+ * Attention: This function will modify the passed array!
+ *
+ * @param {Array<number>} numbers A list of signed integers.
+ * @return {string} The encoded string.
+ */ parcelHelpers.export(exports, "encodeSignedIntegers", ()=>encodeSignedIntegers);
+/**
+ * Decode a list of signed integers from an encoded string
+ *
+ * @param {string} encoded An encoded string.
+ * @return {Array<number>} A list of signed integers.
+ */ parcelHelpers.export(exports, "decodeSignedIntegers", ()=>decodeSignedIntegers);
+/**
+ * Encode a list of unsigned integers and return an encoded string
+ *
+ * @param {Array<number>} numbers A list of unsigned integers.
+ * @return {string} The encoded string.
+ */ parcelHelpers.export(exports, "encodeUnsignedIntegers", ()=>encodeUnsignedIntegers);
+/**
+ * Decode a list of unsigned integers from an encoded string
+ *
+ * @param {string} encoded An encoded string.
+ * @return {Array<number>} A list of unsigned integers.
+ */ parcelHelpers.export(exports, "decodeUnsignedIntegers", ()=>decodeUnsignedIntegers);
+/**
+ * Encode one single unsigned integer and return an encoded string
+ *
+ * @param {number} num Unsigned integer that should be encoded.
+ * @return {string} The encoded string.
+ */ parcelHelpers.export(exports, "encodeUnsignedInteger", ()=>encodeUnsignedInteger);
+/**
+ * @module ol/format/Polyline
+ */ var _featureJs = require("../Feature.js");
+var _featureJsDefault = parcelHelpers.interopDefault(_featureJs);
+var _geometryLayoutJs = require("../geom/GeometryLayout.js");
+var _geometryLayoutJsDefault = parcelHelpers.interopDefault(_geometryLayoutJs);
+var _lineStringJs = require("../geom/LineString.js");
+var _lineStringJsDefault = parcelHelpers.interopDefault(_lineStringJs);
+var _textFeatureJs = require("./TextFeature.js");
+var _textFeatureJsDefault = parcelHelpers.interopDefault(_textFeatureJs);
+var _assertsJs = require("../asserts.js");
+var _flipJs = require("../geom/flat/flip.js");
+var _projJs = require("../proj.js");
+var _simpleGeometryJs = require("../geom/SimpleGeometry.js");
+var _inflateJs = require("../geom/flat/inflate.js");
+var _featureJs1 = require("./Feature.js");
+var __extends = undefined && undefined.__extends || function() {
+    var extendStatics = function(d1, b1) {
+        extendStatics = Object.setPrototypeOf || ({
+            __proto__: []
+        }) instanceof Array && function(d, b) {
+            d.__proto__ = b;
+        } || function(d, b) {
+            for(var p in b)if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+        };
+        return extendStatics(d1, b1);
+    };
+    return function(d, b) {
+        if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() {
+            this.constructor = d;
+        }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+}();
+/**
+ * @typedef {Object} Options
+ * @property {number} [factor=1e5] The factor by which the coordinates values will be scaled.
+ * @property {GeometryLayout} [geometryLayout='XY'] Layout of the
+ * feature geometries created by the format reader.
+ */ /**
+ * @classdesc
+ * Feature format for reading and writing data in the Encoded
+ * Polyline Algorithm Format.
+ *
+ * When reading features, the coordinates are assumed to be in two dimensions
+ * and in [latitude, longitude] order.
+ *
+ * As Polyline sources contain a single feature,
+ * {@link module:ol/format/Polyline~Polyline#readFeatures} will return the
+ * feature in an array.
+ *
+ * @api
+ */ var Polyline = /** @class */ function(_super) {
+    __extends(Polyline1, _super);
+    /**
+     * @param {Options} [opt_options] Optional configuration object.
+     */ function Polyline1(opt_options) {
+        var _this = _super.call(this) || this;
+        var options = opt_options ? opt_options : {};
+        /**
+         * @type {import("../proj/Projection.js").default}
+         */ _this.dataProjection = (0, _projJs.get)("EPSG:4326");
+        /**
+         * @private
+         * @type {number}
+         */ _this.factor_ = options.factor ? options.factor : 1e5;
+        /**
+         * @private
+         * @type {import("../geom/GeometryLayout").default}
+         */ _this.geometryLayout_ = options.geometryLayout ? options.geometryLayout : (0, _geometryLayoutJsDefault.default).XY;
+        return _this;
+    }
+    /**
+     * @protected
+     * @param {string} text Text.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @return {import("../Feature.js").default} Feature.
+     */ Polyline1.prototype.readFeatureFromText = function(text, opt_options) {
+        var geometry = this.readGeometryFromText(text, opt_options);
+        return new (0, _featureJsDefault.default)(geometry);
+    };
+    /**
+     * @param {string} text Text.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @protected
+     * @return {Array<Feature>} Features.
+     */ Polyline1.prototype.readFeaturesFromText = function(text, opt_options) {
+        var feature = this.readFeatureFromText(text, opt_options);
+        return [
+            feature
+        ];
+    };
+    /**
+     * @param {string} text Text.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @protected
+     * @return {import("../geom/Geometry.js").default} Geometry.
+     */ Polyline1.prototype.readGeometryFromText = function(text, opt_options) {
+        var stride = (0, _simpleGeometryJs.getStrideForLayout)(this.geometryLayout_);
+        var flatCoordinates = decodeDeltas(text, stride, this.factor_);
+        (0, _flipJs.flipXY)(flatCoordinates, 0, flatCoordinates.length, stride, flatCoordinates);
+        var coordinates = (0, _inflateJs.inflateCoordinates)(flatCoordinates, 0, flatCoordinates.length, stride);
+        var lineString = new (0, _lineStringJsDefault.default)(coordinates, this.geometryLayout_);
+        return (0, _featureJs1.transformGeometryWithOptions)(lineString, false, this.adaptOptions(opt_options));
+    };
+    /**
+     * @param {import("../Feature.js").default<LineString>} feature Features.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @protected
+     * @return {string} Text.
+     */ Polyline1.prototype.writeFeatureText = function(feature, opt_options) {
+        var geometry = feature.getGeometry();
+        if (geometry) return this.writeGeometryText(geometry, opt_options);
+        else {
+            (0, _assertsJs.assert)(false, 40); // Expected `feature` to have a geometry
+            return "";
+        }
+    };
+    /**
+     * @param {Array<import("../Feature.js").default<LineString>>} features Features.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @protected
+     * @return {string} Text.
+     */ Polyline1.prototype.writeFeaturesText = function(features, opt_options) {
+        return this.writeFeatureText(features[0], opt_options);
+    };
+    /**
+     * @param {LineString} geometry Geometry.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @protected
+     * @return {string} Text.
+     */ Polyline1.prototype.writeGeometryText = function(geometry, opt_options) {
+        geometry = /** @type {LineString} */ (0, _featureJs1.transformGeometryWithOptions)(geometry, true, this.adaptOptions(opt_options));
+        var flatCoordinates = geometry.getFlatCoordinates();
+        var stride = geometry.getStride();
+        (0, _flipJs.flipXY)(flatCoordinates, 0, flatCoordinates.length, stride, flatCoordinates);
+        return encodeDeltas(flatCoordinates, stride, this.factor_);
+    };
+    return Polyline1;
+}((0, _textFeatureJsDefault.default));
+function encodeDeltas(numbers, stride, opt_factor) {
+    var factor = opt_factor ? opt_factor : 1e5;
+    var d;
+    var lastNumbers = new Array(stride);
+    for(d = 0; d < stride; ++d)lastNumbers[d] = 0;
+    for(var i = 0, ii = numbers.length; i < ii;)for(d = 0; d < stride; ++d, ++i){
+        var num = numbers[i];
+        var delta = num - lastNumbers[d];
+        lastNumbers[d] = num;
+        numbers[i] = delta;
+    }
+    return encodeFloats(numbers, factor);
+}
+function decodeDeltas(encoded, stride, opt_factor) {
+    var factor = opt_factor ? opt_factor : 1e5;
+    var d;
+    /** @type {Array<number>} */ var lastNumbers = new Array(stride);
+    for(d = 0; d < stride; ++d)lastNumbers[d] = 0;
+    var numbers = decodeFloats(encoded, factor);
+    for(var i = 0, ii = numbers.length; i < ii;)for(d = 0; d < stride; ++d, ++i){
+        lastNumbers[d] += numbers[i];
+        numbers[i] = lastNumbers[d];
+    }
+    return numbers;
+}
+function encodeFloats(numbers, opt_factor) {
+    var factor = opt_factor ? opt_factor : 1e5;
+    for(var i = 0, ii = numbers.length; i < ii; ++i)numbers[i] = Math.round(numbers[i] * factor);
+    return encodeSignedIntegers(numbers);
+}
+function decodeFloats(encoded, opt_factor) {
+    var factor = opt_factor ? opt_factor : 1e5;
+    var numbers = decodeSignedIntegers(encoded);
+    for(var i = 0, ii = numbers.length; i < ii; ++i)numbers[i] /= factor;
+    return numbers;
+}
+function encodeSignedIntegers(numbers) {
+    for(var i = 0, ii = numbers.length; i < ii; ++i){
+        var num = numbers[i];
+        numbers[i] = num < 0 ? ~(num << 1) : num << 1;
+    }
+    return encodeUnsignedIntegers(numbers);
+}
+function decodeSignedIntegers(encoded) {
+    var numbers = decodeUnsignedIntegers(encoded);
+    for(var i = 0, ii = numbers.length; i < ii; ++i){
+        var num = numbers[i];
+        numbers[i] = num & 1 ? ~(num >> 1) : num >> 1;
+    }
+    return numbers;
+}
+function encodeUnsignedIntegers(numbers) {
+    var encoded = "";
+    for(var i = 0, ii = numbers.length; i < ii; ++i)encoded += encodeUnsignedInteger(numbers[i]);
+    return encoded;
+}
+function decodeUnsignedIntegers(encoded) {
+    var numbers = [];
+    var current = 0;
+    var shift = 0;
+    for(var i = 0, ii = encoded.length; i < ii; ++i){
+        var b = encoded.charCodeAt(i) - 63;
+        current |= (b & 0x1f) << shift;
+        if (b < 0x20) {
+            numbers.push(current);
+            current = 0;
+            shift = 0;
+        } else shift += 5;
+    }
+    return numbers;
+}
+function encodeUnsignedInteger(num) {
+    var value, encoded = "";
+    while(num >= 0x20){
+        value = (0x20 | num & 0x1f) + 63;
+        encoded += String.fromCharCode(value);
+        num >>= 5;
+    }
+    value = num + 63;
+    encoded += String.fromCharCode(value);
+    return encoded;
+}
+exports.default = Polyline;
+
+},{"../Feature.js":"liabO","../geom/GeometryLayout.js":"hDCgS","../geom/LineString.js":"jLUiq","./TextFeature.js":"hOb4l","../asserts.js":"e4TiF","../geom/flat/flip.js":"5GTiq","../proj.js":"SznqC","../geom/SimpleGeometry.js":"hLwk3","../geom/flat/inflate.js":"4Rpju","./Feature.js":"FZbV5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hOb4l":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * @module ol/format/TextFeature
+ */ var _featureJs = require("../format/Feature.js");
+var _featureJsDefault = parcelHelpers.interopDefault(_featureJs);
+var _formatTypeJs = require("../format/FormatType.js");
+var _formatTypeJsDefault = parcelHelpers.interopDefault(_formatTypeJs);
+var _utilJs = require("../util.js");
+var __extends = undefined && undefined.__extends || function() {
+    var extendStatics = function(d1, b1) {
+        extendStatics = Object.setPrototypeOf || ({
+            __proto__: []
+        }) instanceof Array && function(d, b) {
+            d.__proto__ = b;
+        } || function(d, b) {
+            for(var p in b)if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+        };
+        return extendStatics(d1, b1);
+    };
+    return function(d, b) {
+        if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() {
+            this.constructor = d;
+        }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+}();
+/**
+ * @classdesc
+ * Abstract base class; normally only used for creating subclasses and not
+ * instantiated in apps.
+ * Base class for text feature formats.
+ *
+ * @abstract
+ */ var TextFeature = /** @class */ function(_super) {
+    __extends(TextFeature1, _super);
+    function TextFeature1() {
+        return _super.call(this) || this;
+    }
+    /**
+     * @return {import("./FormatType.js").default} Format.
+     */ TextFeature1.prototype.getType = function() {
+        return (0, _formatTypeJsDefault.default).TEXT;
+    };
+    /**
+     * Read the feature from the source.
+     *
+     * @param {Document|Element|Object|string} source Source.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @return {import("../Feature.js").default} Feature.
+     * @api
+     */ TextFeature1.prototype.readFeature = function(source, opt_options) {
+        return this.readFeatureFromText(getText(source), this.adaptOptions(opt_options));
+    };
+    /**
+     * @abstract
+     * @param {string} text Text.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @protected
+     * @return {import("../Feature.js").default} Feature.
+     */ TextFeature1.prototype.readFeatureFromText = function(text, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Read the features from the source.
+     *
+     * @param {Document|Element|Object|string} source Source.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @return {Array<import("../Feature.js").default>} Features.
+     * @api
+     */ TextFeature1.prototype.readFeatures = function(source, opt_options) {
+        return this.readFeaturesFromText(getText(source), this.adaptOptions(opt_options));
+    };
+    /**
+     * @abstract
+     * @param {string} text Text.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @protected
+     * @return {Array<import("../Feature.js").default>} Features.
+     */ TextFeature1.prototype.readFeaturesFromText = function(text, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Read the geometry from the source.
+     *
+     * @param {Document|Element|Object|string} source Source.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @return {import("../geom/Geometry.js").default} Geometry.
+     * @api
+     */ TextFeature1.prototype.readGeometry = function(source, opt_options) {
+        return this.readGeometryFromText(getText(source), this.adaptOptions(opt_options));
+    };
+    /**
+     * @abstract
+     * @param {string} text Text.
+     * @param {import("./Feature.js").ReadOptions} [opt_options] Read options.
+     * @protected
+     * @return {import("../geom/Geometry.js").default} Geometry.
+     */ TextFeature1.prototype.readGeometryFromText = function(text, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Read the projection from the source.
+     *
+     * @param {Document|Element|Object|string} source Source.
+     * @return {import("../proj/Projection.js").default|undefined} Projection.
+     * @api
+     */ TextFeature1.prototype.readProjection = function(source) {
+        return this.readProjectionFromText(getText(source));
+    };
+    /**
+     * @param {string} text Text.
+     * @protected
+     * @return {import("../proj/Projection.js").default|undefined} Projection.
+     */ TextFeature1.prototype.readProjectionFromText = function(text) {
+        return this.dataProjection;
+    };
+    /**
+     * Encode a feature as a string.
+     *
+     * @param {import("../Feature.js").default} feature Feature.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @return {string} Encoded feature.
+     * @api
+     */ TextFeature1.prototype.writeFeature = function(feature, opt_options) {
+        return this.writeFeatureText(feature, this.adaptOptions(opt_options));
+    };
+    /**
+     * @abstract
+     * @param {import("../Feature.js").default} feature Features.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @protected
+     * @return {string} Text.
+     */ TextFeature1.prototype.writeFeatureText = function(feature, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Encode an array of features as string.
+     *
+     * @param {Array<import("../Feature.js").default>} features Features.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @return {string} Encoded features.
+     * @api
+     */ TextFeature1.prototype.writeFeatures = function(features, opt_options) {
+        return this.writeFeaturesText(features, this.adaptOptions(opt_options));
+    };
+    /**
+     * @abstract
+     * @param {Array<import("../Feature.js").default>} features Features.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @protected
+     * @return {string} Text.
+     */ TextFeature1.prototype.writeFeaturesText = function(features, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Write a single geometry.
+     *
+     * @param {import("../geom/Geometry.js").default} geometry Geometry.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @return {string} Geometry.
+     * @api
+     */ TextFeature1.prototype.writeGeometry = function(geometry, opt_options) {
+        return this.writeGeometryText(geometry, this.adaptOptions(opt_options));
+    };
+    /**
+     * @abstract
+     * @param {import("../geom/Geometry.js").default} geometry Geometry.
+     * @param {import("./Feature.js").WriteOptions} [opt_options] Write options.
+     * @protected
+     * @return {string} Text.
+     */ TextFeature1.prototype.writeGeometryText = function(geometry, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    return TextFeature1;
+}((0, _featureJsDefault.default));
+/**
+ * @param {Document|Element|Object|string} source Source.
+ * @return {string} Text.
+ */ function getText(source) {
+    if (typeof source === "string") return source;
+    else return "";
+}
+exports.default = TextFeature;
+
+},{"../format/Feature.js":"FZbV5","../format/FormatType.js":"cQiMP","../util.js":"pLBjQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"FZbV5":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * @param {import("../geom/Geometry.js").default} geometry Geometry.
+ * @param {boolean} write Set to true for writing, false for reading.
+ * @param {WriteOptions|ReadOptions} [opt_options] Options.
+ * @return {import("../geom/Geometry.js").default} Transformed geometry.
+ */ parcelHelpers.export(exports, "transformGeometryWithOptions", ()=>transformGeometryWithOptions);
+/**
+ * @param {import("../extent.js").Extent} extent Extent.
+ * @param {ReadOptions} [opt_options] Read options.
+ * @return {import("../extent.js").Extent} Transformed extent.
+ */ parcelHelpers.export(exports, "transformExtentWithOptions", ()=>transformExtentWithOptions);
+/**
+ * @module ol/format/Feature
+ */ var _unitsJs = require("../proj/Units.js");
+var _unitsJsDefault = parcelHelpers.interopDefault(_unitsJs);
+var _utilJs = require("../util.js");
+var _objJs = require("../obj.js");
+var _projJs = require("../proj.js");
+/**
+ * @typedef {Object} ReadOptions
+ * @property {import("../proj.js").ProjectionLike} [dataProjection] Projection of the data we are reading.
+ * If not provided, the projection will be derived from the data (where possible) or
+ * the `dataProjection` of the format is assigned (where set). If the projection
+ * can not be derived from the data and if no `dataProjection` is set for a format,
+ * the features will not be reprojected.
+ * @property {import("../extent.js").Extent} [extent] Tile extent in map units of the tile being read.
+ * This is only required when reading data with tile pixels as geometry units. When configured,
+ * a `dataProjection` with `TILE_PIXELS` as `units` and the tile's pixel extent as `extent` needs to be
+ * provided.
+ * @property {import("../proj.js").ProjectionLike} [featureProjection] Projection of the feature geometries
+ * created by the format reader. If not provided, features will be returned in the
+ * `dataProjection`.
+ */ /**
+ * @typedef {Object} WriteOptions
+ * @property {import("../proj.js").ProjectionLike} [dataProjection] Projection of the data we are writing.
+ * If not provided, the `dataProjection` of the format is assigned (where set).
+ * If no `dataProjection` is set for a format, the features will be returned
+ * in the `featureProjection`.
+ * @property {import("../proj.js").ProjectionLike} [featureProjection] Projection of the feature geometries
+ * that will be serialized by the format writer. If not provided, geometries are assumed
+ * to be in the `dataProjection` if that is set; in other words, they are not transformed.
+ * @property {boolean} [rightHanded] When writing geometries, follow the right-hand
+ * rule for linear ring orientation.  This means that polygons will have counter-clockwise
+ * exterior rings and clockwise interior rings.  By default, coordinates are serialized
+ * as they are provided at construction.  If `true`, the right-hand rule will
+ * be applied.  If `false`, the left-hand rule will be applied (clockwise for
+ * exterior and counter-clockwise for interior rings).  Note that not all
+ * formats support this.  The GeoJSON format does use this property when writing
+ * geometries.
+ * @property {number} [decimals] Maximum number of decimal places for coordinates.
+ * Coordinates are stored internally as floats, but floating-point arithmetic can create
+ * coordinates with a large number of decimal places, not generally wanted on output.
+ * Set a number here to round coordinates. Can also be used to ensure that
+ * coordinates read in can be written back out with the same number of decimals.
+ * Default is no rounding.
+ */ /**
+ * @classdesc
+ * Abstract base class; normally only used for creating subclasses and not
+ * instantiated in apps.
+ * Base class for feature formats.
+ * {@link module:ol/format/Feature~FeatureFormat} subclasses provide the ability to decode and encode
+ * {@link module:ol/Feature~Feature} objects from a variety of commonly used geospatial
+ * file formats.  See the documentation for each format for more details.
+ *
+ * @abstract
+ * @api
+ */ var FeatureFormat = /** @class */ function() {
+    function FeatureFormat1() {
+        /**
+         * @protected
+         * @type {import("../proj/Projection.js").default|undefined}
+         */ this.dataProjection = undefined;
+        /**
+         * @protected
+         * @type {import("../proj/Projection.js").default|undefined}
+         */ this.defaultFeatureProjection = undefined;
+        /**
+         * A list media types supported by the format in descending order of preference.
+         * @type {Array<string>}
+         */ this.supportedMediaTypes = null;
+    }
+    /**
+     * Adds the data projection to the read options.
+     * @param {Document|Element|Object|string} source Source.
+     * @param {ReadOptions} [opt_options] Options.
+     * @return {ReadOptions|undefined} Options.
+     * @protected
+     */ FeatureFormat1.prototype.getReadOptions = function(source, opt_options) {
+        var options;
+        if (opt_options) {
+            var dataProjection = opt_options.dataProjection ? (0, _projJs.get)(opt_options.dataProjection) : this.readProjection(source);
+            if (opt_options.extent && dataProjection && dataProjection.getUnits() === (0, _unitsJsDefault.default).TILE_PIXELS) {
+                dataProjection = (0, _projJs.get)(dataProjection);
+                dataProjection.setWorldExtent(opt_options.extent);
+            }
+            options = {
+                dataProjection: dataProjection,
+                featureProjection: opt_options.featureProjection
+            };
+        }
+        return this.adaptOptions(options);
+    };
+    /**
+     * Sets the `dataProjection` on the options, if no `dataProjection`
+     * is set.
+     * @param {WriteOptions|ReadOptions|undefined} options
+     *     Options.
+     * @protected
+     * @return {WriteOptions|ReadOptions|undefined}
+     *     Updated options.
+     */ FeatureFormat1.prototype.adaptOptions = function(options) {
+        return (0, _objJs.assign)({
+            dataProjection: this.dataProjection,
+            featureProjection: this.defaultFeatureProjection
+        }, options);
+    };
+    /**
+     * @abstract
+     * @return {import("./FormatType.js").default} Format.
+     */ FeatureFormat1.prototype.getType = function() {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Read a single feature from a source.
+     *
+     * @abstract
+     * @param {Document|Element|Object|string} source Source.
+     * @param {ReadOptions} [opt_options] Read options.
+     * @return {import("../Feature.js").FeatureLike} Feature.
+     */ FeatureFormat1.prototype.readFeature = function(source, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Read all features from a source.
+     *
+     * @abstract
+     * @param {Document|Element|ArrayBuffer|Object|string} source Source.
+     * @param {ReadOptions} [opt_options] Read options.
+     * @return {Array<import("../Feature.js").FeatureLike>} Features.
+     */ FeatureFormat1.prototype.readFeatures = function(source, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Read a single geometry from a source.
+     *
+     * @abstract
+     * @param {Document|Element|Object|string} source Source.
+     * @param {ReadOptions} [opt_options] Read options.
+     * @return {import("../geom/Geometry.js").default} Geometry.
+     */ FeatureFormat1.prototype.readGeometry = function(source, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Read the projection from a source.
+     *
+     * @abstract
+     * @param {Document|Element|Object|string} source Source.
+     * @return {import("../proj/Projection.js").default|undefined} Projection.
+     */ FeatureFormat1.prototype.readProjection = function(source) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Encode a feature in this format.
+     *
+     * @abstract
+     * @param {import("../Feature.js").default} feature Feature.
+     * @param {WriteOptions} [opt_options] Write options.
+     * @return {string|ArrayBuffer} Result.
+     */ FeatureFormat1.prototype.writeFeature = function(feature, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Encode an array of features in this format.
+     *
+     * @abstract
+     * @param {Array<import("../Feature.js").default>} features Features.
+     * @param {WriteOptions} [opt_options] Write options.
+     * @return {string|ArrayBuffer} Result.
+     */ FeatureFormat1.prototype.writeFeatures = function(features, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    /**
+     * Write a single geometry in this format.
+     *
+     * @abstract
+     * @param {import("../geom/Geometry.js").default} geometry Geometry.
+     * @param {WriteOptions} [opt_options] Write options.
+     * @return {string|ArrayBuffer} Result.
+     */ FeatureFormat1.prototype.writeGeometry = function(geometry, opt_options) {
+        return (0, _utilJs.abstract)();
+    };
+    return FeatureFormat1;
+}();
+exports.default = FeatureFormat;
+function transformGeometryWithOptions(geometry, write, opt_options) {
+    var featureProjection = opt_options ? (0, _projJs.get)(opt_options.featureProjection) : null;
+    var dataProjection = opt_options ? (0, _projJs.get)(opt_options.dataProjection) : null;
+    var transformed;
+    if (featureProjection && dataProjection && !(0, _projJs.equivalent)(featureProjection, dataProjection)) transformed = (write ? geometry.clone() : geometry).transform(write ? featureProjection : dataProjection, write ? dataProjection : featureProjection);
+    else transformed = geometry;
+    if (write && opt_options && /** @type {WriteOptions} */ opt_options.decimals !== undefined) {
+        var power_1 = Math.pow(10, /** @type {WriteOptions} */ opt_options.decimals);
+        // if decimals option on write, round each coordinate appropriately
+        /**
+         * @param {Array<number>} coordinates Coordinates.
+         * @return {Array<number>} Transformed coordinates.
+         */ var transform = function(coordinates) {
+            for(var i = 0, ii = coordinates.length; i < ii; ++i)coordinates[i] = Math.round(coordinates[i] * power_1) / power_1;
+            return coordinates;
+        };
+        if (transformed === geometry) transformed = geometry.clone();
+        transformed.applyTransform(transform);
+    }
+    return transformed;
+}
+function transformExtentWithOptions(extent, opt_options) {
+    var featureProjection = opt_options ? (0, _projJs.get)(opt_options.featureProjection) : null;
+    var dataProjection = opt_options ? (0, _projJs.get)(opt_options.dataProjection) : null;
+    if (featureProjection && dataProjection && !(0, _projJs.equivalent)(featureProjection, dataProjection)) return (0, _projJs.transformExtent)(extent, dataProjection, featureProjection);
+    else return extent;
+}
+
+},{"../proj/Units.js":"gOgy6","../util.js":"pLBjQ","../obj.js":"3ssAG","../proj.js":"SznqC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5GTiq":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * @module ol/geom/flat/flip
+ */ /**
+ * @param {Array<number>} flatCoordinates Flat coordinates.
+ * @param {number} offset Offset.
+ * @param {number} end End.
+ * @param {number} stride Stride.
+ * @param {Array<number>} [opt_dest] Destination.
+ * @param {number} [opt_destOffset] Destination offset.
+ * @return {Array<number>} Flat coordinates.
+ */ parcelHelpers.export(exports, "flipXY", ()=>flipXY);
+function flipXY(flatCoordinates, offset, end, stride, opt_dest, opt_destOffset) {
+    var dest, destOffset;
+    if (opt_dest !== undefined) {
+        dest = opt_dest;
+        destOffset = opt_destOffset !== undefined ? opt_destOffset : 0;
+    } else {
+        dest = [];
+        destOffset = 0;
+    }
+    var j = offset;
+    while(j < end){
+        var x = flatCoordinates[j++];
+        dest[destOffset++] = flatCoordinates[j++];
+        dest[destOffset++] = x;
+        for(var k = 2; k < stride; ++k)dest[destOffset++] = flatCoordinates[j++];
+    }
+    dest.length = destOffset;
+    return dest;
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5x5oh":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "BingMaps", ()=>(0, _bingMapsJsDefault.default));
