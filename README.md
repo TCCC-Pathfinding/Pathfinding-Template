@@ -1,6 +1,8 @@
 # Pathfinding-Template
 OpenStreetMap template with startup code.
 
+[Live Demo](https://tccc-pathfinding.github.io/Pathfinding-Template/)
+
 ## Project Dependencies
 
 **Latest version of Node and NPM**
