@@ -15,18 +15,22 @@ import Point from 'ol/geom/Point';
 
 //Vector Source containing features on map
 const source = new VectorSource();
-const coordinatesList = []
 
 //Basic client to host JSON data
 const client = new XMLHttpRequest();
 client.open('GET', './data/test_data.json');
 
+/**
+ * IMPORTANT! SET THIS TO YOUR LOCATION
+ */
+const city = "buffalo" //Choose "buffalo" or "wilmington" based on your location
 
 // Creates features from JSON data
 // Creates routes IN ORDER from JSON input
 client.onload = function () {
-    const json = JSON.parse(client.responseText);
+    const json = JSON.parse(client.responseText)[city.toLowerCase()];
     const features = [];
+    const coordinatesList = []
 
     for (let location of json){
       let coords = [location["lon"],location["lat"]]
@@ -66,9 +70,24 @@ client.onload = function () {
     console.log(features)
     //Add the features to the Vector Source
     source.addFeatures(features);
-    renderRoutes(coordinatesList)
+
+    /**
+     * TODO: Implement findShortestPath function to find the shortest path between the list of coordinates
+     */
+    let shortestPath = findShortestPath(coordinatesList)
+
+    renderRoutes(shortestPath)
   };
   client.send();
+
+/**
+ * @param {array of coordinates} coordinatesList 
+ * @returns list of coordinates sorted by shortest path
+ */
+function findShortestPath(coordinatesList){
+  //IMPLEMENT ME
+  return coordinatesList
+}
 
 //Layer containing the points rendered on top of the map
 const vectorLayer = new VectorLayer({
@@ -81,11 +100,26 @@ const osmLayer = new TileLayer({
 })
 
 //View Object
-const view = new View({
-  center: fromLonLat([-78.8759022, 42.8795322]),
-  zoom: 14,
-
-})
+let view
+switch(city.toLowerCase()){
+  case "buffalo":
+    view = new View({
+      center: fromLonLat([-78.8759022, 42.8795322]),
+      zoom: 14,
+    })
+    break;
+  case "wilmington":
+    view = new View({
+      center: fromLonLat([-75.549883, 39.749889]),
+      zoom: 14,
+    })
+    break;
+  default:
+    view = new View({
+      center: fromLonLat([0,0]),
+      zoom: 1,
+    })   
+}
 
 //Map Object
 const map = new Map({
