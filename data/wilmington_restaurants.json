@@ -1,0 +1,8 @@
+{"restaurants": [
+    {"location": "Rosenfeld Jewish Deli", "lat":39.7477798, "lon":-75.5513687},   
+    {"location": "PureBread Deli", "lat":39.7478561, "lon":-75.5514373},
+    {"location": "El Diablo Burritos", "lat":39.743935, "lon":-75.5490265},
+    {"location": "Libby's Restaurant", "lat":39.7441331, "lon":-75.5508285},
+    {"location": "Delta Restaurant", "lat":39.7455969, "lon":-75.550902},
+    {"location": "Semo's", "lat":39.74643, "lon":-75.552483}
+]}

@@ -1,0 +1,9 @@
+{"restaurants": [
+    {"location": "Dinosaur Barbeque", "lat":42.8926101, "lon":-78.8742142},   
+    {"location": "Pearl Street Grill & Brewery", "lat":42.8810807, "lon":-78.8774103},
+    {"location": "Hofbräuhaus Buffalo", "lat":42.8762392, "lon":-78.8690666},
+    {"location": "Rakhapura Restaurants", "lat":42.8824576, "lon":-78.8757251},
+    {"location": "Pete's Place Food Shop", "lat":42.882205, "lon":-78.876303},
+    {"location": "Fera's Lunch Hour", "lat":42.881737, "lon":-78.8767525},
+    {"location": "The Lunch Box Buffalo", "lat":42.887528, "lon":-78.875108}
+]}
