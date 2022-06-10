@@ -1,0 +1,16 @@
+{
+"buffalo": [
+        {"location": "Dinosaur Barbeque", "lat":42.8926101, "lon":-78.8742142},   
+        {"location": "Pearl Street Grill & Brewery", "lat":42.8810807, "lon":-78.8774103},
+        {"location": "Hofbräuhaus Buffalo", "lat":42.8762392, "lon":-78.8690666},
+        {"location": "Rakhapura Restaurants", "lat":42.8824576, "lon":-78.8757251},
+        {"location": "Fera's Lunch Hour", "lat":42.881737, "lon":-78.8767525},
+        {"location": "The Lunch Box Buffalo", "lat":42.887528, "lon":-78.875108}],
+"wilmington": [
+        {"location": "Rosenfeld Jewish Deli", "lat":39.7477798, "lon":-75.5513687},   
+        {"location": "PureBread Deli", "lat":39.7478561, "lon":-75.5514373},
+        {"location": "El Diablo Burritos", "lat":39.743935, "lon":-75.5490265},
+        {"location": "Libby's Restaurant", "lat":39.7441331, "lon":-75.5508285},
+        {"location": "Delta Restaurant", "lat":39.7455969, "lon":-75.550902},
+        {"location": "Semo's", "lat":39.74643, "lon":-75.552483}]
+}

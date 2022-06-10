@@ -16,7 +16,7 @@ def get_data_for(location, name):
 
     resulting_ways = api.query(f"""way{str(location)};out;""")
 
-    with open(f"{name}_restaurants.json", "r") as f:
+    with open(f"restaurants.json", "r") as f:
         restaurant_nodes = json.load(f)
 
     # we only want to keep the start and endpoints for the ways
@@ -39,7 +39,7 @@ def get_data_for(location, name):
             nodes.append((node.id, float(node.lat), float(node.lon)))
 
     # next, add the restaurants to the nodes and links
-    for rest in restaurant_nodes['restaurants']:
+    for rest in restaurant_nodes[name]:
         new_node = (rest['location'], rest['lat'], rest['lon'])
         nearest_node = _get_nearest_node_id(new_node, nodes)
         nodes.append(new_node)
@@ -74,7 +74,7 @@ def _dist(a, b):
 
 def main():
     get_data_for(buffalo, "buffalo")
-    get_data_for(wilmington, "wilmington")
+    #get_data_for(wilmington, "wilmington")
 
 if __name__ == "__main__":
     main()

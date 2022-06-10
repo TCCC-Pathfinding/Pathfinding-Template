@@ -4375,7 +4375,6 @@
 	{"id": "Pearl Street Grill & Brewery", "lat":42.8810807, "lon":-78.8774103 },
 	{"id": "Hofbräuhaus Buffalo", "lat":42.8762392, "lon":-78.8690666 },
 	{"id": "Rakhapura Restaurants", "lat":42.8824576, "lon":-78.8757251 },
-	{"id": "Pete's Place Food Shop", "lat":42.882205, "lon":-78.876303 },
 	{"id": "Fera's Lunch Hour", "lat":42.881737, "lon":-78.8767525 },
 	{"id": "The Lunch Box Buffalo", "lat":42.887528, "lon":-78.875108 }],
 "edges":[
@@ -7037,6 +7036,5 @@
 	{"a": "Pearl Street Grill & Brewery", "b": "3997455490"},
 	{"a": "Hofbräuhaus Buffalo", "b": "4435494918"},
 	{"a": "Rakhapura Restaurants", "b": "3384357702"},
-	{"a": "Pete's Place Food Shop", "b": "Rakhapura Restaurants"},
-	{"a": "Fera's Lunch Hour", "b": "Pete's Place Food Shop"},
+	{"a": "Fera's Lunch Hour", "b": "Pearl Street Grill & Brewery"},
 	{"a": "The Lunch Box Buffalo", "b": "3384357735"}]}
