@@ -16,7 +16,7 @@ import LineString from 'ol/geom/LineString';
 //Vector Source containing features on map
 const source = new VectorSource();
 
-//Basic client to host JSON data
+// Basic client to host JSON data
 const client = new XMLHttpRequest();
 
 /**
@@ -24,7 +24,10 @@ const client = new XMLHttpRequest();
  */
  const city = "buffalo" //Choose "buffalo" or "wilmington" based on your location
 
- //Make sure you only have one dataset or the other, not both
+ /**
+  * IMPORTANT! SET THIS TO YOUR LOCATION
+  * Make sure you only have one dataset or the other, not both
+  */
  client.open('GET', './data/buffalo_graph.json');
 //  client.open('GET', './data/wilmington_graph.json');
 
@@ -41,9 +44,9 @@ client.onload = function () {
       let feature = new Feature({
         geometry: new Point(fromLonLat(coords)),
       })
-      //Checks if the ID doesn't contain any letters.
+      // Checks if the ID doesn't contain any letters.
       if(!(/[a-zA-Z]/.test(location["id"]))){
-        //Styling configuration 
+        // Styling configuration 
         const style = new Style({
           image: new CircleStyle({
             radius: 1.5,
@@ -60,7 +63,7 @@ client.onload = function () {
         feature.setStyle(style)
         nodeFeatures.push(feature)
       } else{
-          //Styling configuration with text
+          // Styling configuration with text
           const style = new Style({
             image: new CircleStyle({
               radius: 3,
@@ -90,9 +93,9 @@ client.onload = function () {
           restaurantFeatures.push(feature)
       }
     }
-    //Add the node features to the Vector Source (You may choose to render this or not)
+    // Add the node features to the Vector Source (You may choose to render this or not)
     source.addFeatures(nodeFeatures);
-    //Add the restaurant features to Vector Source
+    // Add the restaurant features to Vector Source
     source.addFeatures(restaurantFeatures)
 
     /**
@@ -111,21 +114,21 @@ client.onload = function () {
  * @returns Array of coordinates of route e.g. [[lon, lat],[lon, lat]]
  */
 function findShortestPath(nodes, edges){
-  //IMPLEMENT ME
+  // TODO: IMPLEMENT ME
   return []
 }
 
-//Layer containing the points rendered on top of the map
+// Layer containing the points rendered on top of the map
 const vectorLayer = new VectorLayer({
   source: source,
 });
 
-//Layer with the actual map
+// Layer with the actual map
 const osmLayer = new TileLayer({
   source: new OSM(),
 })
 
-//View Object
+// View Object
 let view
 switch(city.toLowerCase()){
   case "buffalo":
@@ -147,7 +150,7 @@ switch(city.toLowerCase()){
     })   
 }
 
-//Map Object
+// Map Object
 const map = new Map({
   target: 'map-container',
   layers: [ osmLayer, vectorLayer],
@@ -162,7 +165,7 @@ function animate() {
 animate();
 
 // Renders routes between a list of coordinates in order
-async function renderRoutes(pointsList, edges){
+async function renderRoutes(pointsList){
   let line = new LineString(pointsList).transform('EPSG:4326', 'EPSG:3857')
   var feature = new Feature(line);
   let routeStyle = new Style({
