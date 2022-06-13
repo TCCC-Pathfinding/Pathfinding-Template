@@ -134,13 +134,13 @@ switch(city.toLowerCase()){
   case "buffalo":
     view = new View({
       center: fromLonLat([-78.8759022, 42.8926101]),
-      zoom: 14,
+      zoom: 15,
     })
     break;
   case "wilmington":
     view = new View({
       center: fromLonLat([-75.549883, 39.749889]),
-      zoom: 14,
+      zoom: 15,
     })
     break;
   default:
