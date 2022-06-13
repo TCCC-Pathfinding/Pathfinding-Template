@@ -133,7 +133,7 @@ let view
 switch(city.toLowerCase()){
   case "buffalo":
     view = new View({
-      center: fromLonLat([-78.8759022, 42.8795322]),
+      center: fromLonLat([-78.8759022, 42.8926101]),
       zoom: 14,
     })
     break;
