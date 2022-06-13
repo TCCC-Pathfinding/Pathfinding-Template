@@ -74,7 +74,7 @@ def _dist(a, b):
 
 def main():
     get_data_for(buffalo, "buffalo")
-    #get_data_for(wilmington, "wilmington")
+    get_data_for(wilmington, "wilmington")
 
 if __name__ == "__main__":
     main()
