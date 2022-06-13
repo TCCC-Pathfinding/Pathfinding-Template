@@ -16,8 +16,6 @@ import LineString from 'ol/geom/LineString';
 //Vector Source containing features on map
 const source = new VectorSource();
 
-
-
 //Basic client to host JSON data
 const client = new XMLHttpRequest();
 
@@ -25,75 +23,94 @@ const client = new XMLHttpRequest();
  * IMPORTANT! SET THIS TO YOUR LOCATION
  */
  const city = "buffalo" //Choose "buffalo" or "wilmington" based on your location
+
+ //Make sure you only have one dataset or the other, not both
  client.open('GET', './data/buffalo_graph.json');
 //  client.open('GET', './data/wilmington_graph.json');
 
 // Creates features from JSON data
-// Creates routes IN ORDER from JSON input
 client.onload = function () {
     const json = JSON.parse(client.responseText);
-    const features = [];
-    const coordinatesList = [];
+    const nodeFeatures = []
+    const restaurantFeatures = []
+    const nodes = json["nodes"];
     const edges = json["edges"];
 
     for (let location of json["nodes"]){
       let coords = [location["lon"],location["lat"]]
-      let id = /[a-zA-Z]/.test(location["id"]) ? location["id"] : ""
-      if(id === ""){
-        
-      }
-      coordinatesList.push(coords)
       let feature = new Feature({
         geometry: new Point(fromLonLat(coords)),
       })
-
-      //Styling configuration and text
-      const style = new Style({
-        image: new CircleStyle({
-          radius: 2,
-          fill: new Fill({
-            color: '#0084ff',
-          }),
-          stroke: new Stroke({
-            color: 'black',
-            width: 1,
-          }),
-        }),
-        text: new Text({
-          font: '12px Calibri,sans-serif',
-          text: id,
-          textBaseline: 'bottom',
-          fill: new Fill({
-            color: 'rgba(0,0,0,1)'
-          }),
-          stroke: new Stroke({
-            color: 'rgba(255,255,255,1)',
-            width: 3
+      //Checks if the ID doesn't contain any letters.
+      if(!(/[a-zA-Z]/.test(location["id"]))){
+        //Styling configuration 
+        const style = new Style({
+          image: new CircleStyle({
+            radius: 1.5,
+            fill: new Fill({
+              color: '#0084ff',
+            }),
+            stroke: new Stroke({
+              color: 'black',
+              width: 1,
+            }),
           })
-        })
-      });
-      feature.setStyle(style)
-      features.push(feature)
+        });
+
+        feature.setStyle(style)
+        nodeFeatures.push(feature)
+      } else{
+          //Styling configuration with text
+          const style = new Style({
+            image: new CircleStyle({
+              radius: 3,
+              fill: new Fill({
+                color: '#FF10F0',
+              }),
+              stroke: new Stroke({
+                color: 'black',
+                width: 1,
+              }),
+            }),
+            text: new Text({
+              font: '12px Calibri,sans-serif',
+              text: location["id"],
+              textBaseline: 'bottom',
+              fill: new Fill({
+                color: 'rgba(0,0,0,1)'
+              }),
+              stroke: new Stroke({
+                color: 'rgba(255,255,255,1)',
+                width: 3
+              })
+            })
+          });
+  
+          feature.setStyle(style)
+          restaurantFeatures.push(feature)
+      }
     }
-    //Add the features to the Vector Source
-    source.addFeatures(features);
+    //Add the node features to the Vector Source (You may choose to render this or not)
+    source.addFeatures(nodeFeatures);
+    //Add the restaurant features to Vector Source
+    source.addFeatures(restaurantFeatures)
 
     /**
      * TODO: Implement findShortestPath function to find the shortest path between the restaurants in list of coordinates
      */
-    let shortestPath = findShortestPath(coordinatesList, edges)
-    // Renders the route based on a array of coordinates
+    let shortestPath = findShortestPath(nodes, edges)
+    // Renders the route based on an array of coordinates e.g. [[lon, lat],[lon, lat]]
     renderRoutes(shortestPath)
 
   };
   client.send();
 
 /**
- * @param coordinatesList: Coordinate of street with ID, latitude and longitude
- * @param edges: Shows which points should connect together
- * @returns list of coordinates sorted by shortest path
+ * @param nodes: Array of objects containing coordinate of street with ID, latitude and longitude
+ * @param edges: Array of objects showing how each point should connect together
+ * @returns Array of coordinates of route e.g. [[lon, lat],[lon, lat]]
  */
-function findShortestPath(coordinatesList, edges){
+function findShortestPath(nodes, edges){
   //IMPLEMENT ME
   return []
 }
