@@ -31,12 +31,12 @@ const client = new XMLHttpRequest();
 // Creates features from JSON data
 // Creates routes IN ORDER from JSON input
 client.onload = function () {
-    const json = JSON.parse(client.responseText)["nodes"];
-    console.log(json)
+    const json = JSON.parse(client.responseText);
     const features = [];
-    const coordinatesList = []
+    const coordinatesList = [];
+    const edges = json["edges"];
 
-    for (let location of json){
+    for (let location of json["nodes"]){
       let coords = [location["lon"],location["lat"]]
       let id = /[a-zA-Z]/.test(location["id"]) ? location["id"] : ""
       if(id === ""){
@@ -81,19 +81,21 @@ client.onload = function () {
     /**
      * TODO: Implement findShortestPath function to find the shortest path between the restaurants in list of coordinates
      */
-    let shortestPath = findShortestPath(coordinatesList)
+    let shortestPath = findShortestPath(coordinatesList, edges)
+    // Renders the route based on a array of coordinates
+    renderRoutes(shortestPath)
 
-    // renderRoutes(shortestPath)
   };
   client.send();
 
 /**
- * @param {array of coordinates} coordinatesList 
+ * @param coordinatesList: Coordinate of street with ID, latitude and longitude
+ * @param edges: Shows which points should connect together
  * @returns list of coordinates sorted by shortest path
  */
-function findShortestPath(coordinatesList){
+function findShortestPath(coordinatesList, edges){
   //IMPLEMENT ME
-  return coordinatesList
+  return []
 }
 
 //Layer containing the points rendered on top of the map
@@ -143,7 +145,7 @@ function animate() {
 animate();
 
 // Renders routes between a list of coordinates in order
-async function renderRoutes(pointsList){
+async function renderRoutes(pointsList, edges){
   let line = new LineString(pointsList).transform('EPSG:4326', 'EPSG:3857')
   var feature = new Feature(line);
   let routeStyle = new Style({
@@ -155,5 +157,4 @@ async function renderRoutes(pointsList){
 
   feature.setStyle(routeStyle);
   source.addFeature(feature)
-
 }
